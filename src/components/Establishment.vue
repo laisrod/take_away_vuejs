@@ -1,5 +1,22 @@
 <template>
   <div class="establishment">
+    <!-- Novo input para establishmentCode -->
+    <div class="establishment-input">
+      <label for="establishmentCode">Código do Estabelecimento:</label>
+      <input 
+        type="text" 
+        id="establishmentCode" 
+        v-model="establishmentCode" 
+        @change="buscarPedidos"
+        placeholder="Digite o código do estabelecimento"
+      >
+      <button 
+        @click="buscarPedidos"
+        class="buscar-btn"
+      >
+        Buscar Pedidos
+      </button>
+    </div>
     <h2>Pedidos do Estabelecimento</h2>
     <div v-if="loading">Carregando...</div>
     <div v-else-if="pedidos.length === 0">
@@ -94,31 +111,8 @@ export default {
       loading: true,
       error: null,
       pedidoSelecionado: null,
+      establishmentCode: '',
     };
-  },
-  async created() {
-    try {
-      const response = await fetch(
-        "http://localhost:3000/api/v1/establishments/6066d0a2b780/orders?status[]=pending&status[]=preparing",
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Erro ao buscar pedidos");
-      }
-
-      this.pedidos = await response.json();
-    } catch (error) {
-      this.error = error.message;
-      console.error("Erro:", error);
-    } finally {
-      this.loading = false;
-    }
   },
   methods: {
     selecionarPedido(pedido) {
@@ -132,7 +126,7 @@ export default {
     async aceitarPedido(pedido) {
       try {
         const response = await fetch(
-          `http://localhost:3000/api/v1/establishments/6066d0a2b780/orders/${pedido.code}/ready_order`,
+          `http://localhost:3000/api/v1/establishments/${this.establishmentCode}/orders/${pedido.code}/order_ready`,
           {
             method: "PATCH",
             headers: {
@@ -157,11 +151,38 @@ export default {
         alert("Não foi possível aceitar o pedido. Tente novamente.");
       }
     },
+    async buscarPedidos() {
+      if (!this.establishmentCode) return;
+      
+      this.loading = true;
+      try {
+        const response = await fetch(
+          `http://localhost:3000/api/v1/establishments/${this.establishmentCode}/orders?status[]=pending&status[]=preparing`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Erro ao buscar pedidos");
+        }
+
+        this.pedidos = await response.json();
+      } catch (error) {
+        this.error = error.message;
+        console.error("Erro:", error);
+      } finally {
+        this.loading = false;
+      }
+    },
   },
-  async marcarPedidoComoPronto(pedido) {
+  async marcarPedidoComoPronto(establishmentCode, pedido) {
   try {
     const response = await fetch(
-      `http://localhost:3000/api/v1/establishments/6066d0a2b780/orders/${pedido.code}/ready_order`,
+      `http://localhost:3000/api/v1/establishments/${establishmentCode}/orders/${pedido.code}/order_ready`,
       {
         method: "PATCH",
       }

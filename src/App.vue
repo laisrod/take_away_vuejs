@@ -1,5 +1,5 @@
 <script setup>
-import Establishment from "./components/Establishment.vue";
+  import Establishment from "./components/Establishment.vue";
 </script>
 
 <template>
